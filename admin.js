@@ -28,6 +28,10 @@ const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 const money = (n) => `${Number(n || 0).toLocaleString("ar-EG")} ج.م`;
 
+// رابط المتجر الفعلي (واجهة العملاء) — لوحة التحكم بقت على ريبو/رابط منفصل تمامًا
+// عن المتجر، فمينفعش نشتق رابط المتجر من رابط الصفحة الحالية، لازم يتحدد يدويًا هنا.
+const STORE_BASE_URL = "https://a7m721.github.io/darstore/";
+
 function showAdminToast(msg) {
   const t = $("#admin-toast");
   t.textContent = msg;
@@ -340,7 +344,7 @@ function collectWorkingHours() {
 }
 
 function renderStoreQr() {
-  const url = location.href.split("#")[0];
+  const url = STORE_BASE_URL;
   const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(url)}`;
   const img = $("#store-qr-img");
   const link = $("#store-qr-download");
@@ -663,7 +667,7 @@ function renderProductsTable() {
 }
 
 function getStoreBaseUrl() {
-  return location.href.replace(/admin\.html.*$/, "index.html");
+  return STORE_BASE_URL;
 }
 
 function showProductQr(productId) {
