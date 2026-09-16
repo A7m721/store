@@ -437,7 +437,7 @@ function renderBannersTable(banners) {
   if (!banners.length) { tbody.innerHTML = `<tr class="empty-row"><td colspan="5">لا توجد بانرات بعد</td></tr>`; return; }
   tbody.innerHTML = banners.map(b => `
     <tr>
-      <td><img class="table-thumb" src="${b.imageUrl || ""}"></td>
+      <td><span class="table-thumb banner-style-swatch" data-style="${b.style || "classic"}" title="${b.style || "classic"}"></span></td>
       <td>${b.title || ""}</td>
       <td>${b.order ?? 0}</td>
       <td><span class="pill ${b.active !== false ? "pill-green" : "pill-gray"}">${b.active !== false ? "مفعّل" : "غير مفعّل"}</span></td>
@@ -465,7 +465,7 @@ function editBanner(id, banners) {
   $("#banner-id").value = b.id;
   $("#banner-title").value = b.title || "";
   $("#banner-description").value = b.description || "";
-  $("#banner-imageUrl").value = b.imageUrl || "";
+  $("#banner-style").value = b.style || "classic";
   $("#banner-buttonLink").value = b.buttonLink || "";
   $("#banner-order").value = b.order ?? 0;
   $("#banner-active").value = String(b.active !== false);
@@ -480,7 +480,7 @@ $("#banner-form").addEventListener("submit", async (e) => {
   const data = {
     title: $("#banner-title").value.trim(),
     description: $("#banner-description").value.trim(),
-    imageUrl: $("#banner-imageUrl").value.trim(),
+    style: $("#banner-style").value,
     buttonLink: $("#banner-buttonLink").value.trim(),
     order: Number($("#banner-order").value) || 0,
     active: $("#banner-active").value === "true"
