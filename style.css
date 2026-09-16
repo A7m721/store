@@ -161,6 +161,10 @@ tbody tr{transition:background .12s;}
 tbody tr:last-child td{border-bottom:none;}
 tbody tr:hover{background:var(--surface-2);}
 .table-thumb{width:44px; height:44px; border-radius:9px; object-fit:cover; background:var(--surface-2);}
+.banner-style-swatch{display:inline-block;}
+.banner-style-swatch[data-style="gold"]{background:linear-gradient(120deg, #1B140A 0%, #3B2A10 45%, #6B4A12 100%);}
+.banner-style-swatch[data-style="forest"]{background:linear-gradient(120deg, #071C14 0%, #0F3524 45%, #1F6B46 100%);}
+.banner-style-swatch[data-style="classic"]{background:linear-gradient(120deg, #060B09 0%, #0F1D18 55%, #1B2E27 100%);}
 .pill{padding:4px 11px; border-radius:999px; font-size:11.5px; font-weight:700; display:inline-block;}
 .pill-green{background:rgba(51,163,121,.16); color:var(--forest-2);}
 .pill-red{background:rgba(229,105,91,.16); color:var(--danger);}
