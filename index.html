@@ -43,6 +43,7 @@
       <a data-section="products"><span class="ic">📦</span> المنتجات</a>
       <a data-section="coupons"><span class="ic">🏷️</span> الكوبونات</a>
       <a data-section="orders"><span class="ic">🧾</span> الطلبات</a>
+      <a data-section="stockalerts"><span class="ic">🔔</span> تنبيهات التوفر</a>
       <a data-section="reviews"><span class="ic">⭐</span> التقييمات</a>
       <a data-section="customers"><span class="ic">👥</span> العملاء</a>
     </nav>
@@ -96,6 +97,9 @@
           <div class="form-group"><label>رقم واتساب لتنبيهات نفاد المخزون (اختياري)</label><input id="s-notifyPhone" placeholder="اتركه فارغًا لاستخدام رقم الواتساب أعلاه"></div>
           <div class="form-group full"><label>سياسة الخصوصية</label><textarea id="s-privacyPolicy" rows="4"></textarea></div>
           <div class="form-group full"><label>الشروط والأحكام</label><textarea id="s-termsAndConditions" rows="4"></textarea></div>
+          <div class="form-group full"><label>من نحن (اختياري)</label><textarea id="s-aboutText" rows="4"></textarea></div>
+          <div class="form-group full"><label>الأسئلة الشائعة (اختياري)</label><textarea id="s-faqText" rows="5" placeholder="اكتب كل سؤال وإجابته، سطر فاضي بين كل سؤال والتاني"></textarea></div>
+          <div class="form-group full"><label>معرّف Google Analytics (اختياري)</label><input id="s-gaId" placeholder="G-XXXXXXXXXX"></div>
           <div class="form-group full">
             <label>مواعيد العمل (لعرض "المتجر مفتوح الآن / مغلق حاليًا" للعملاء)</label>
             <div class="working-hours-grid" id="working-hours-grid"></div>
@@ -180,6 +184,15 @@
       </div>
     </section>
 
+    <!-- Stock Alerts -->
+    <section class="section-panel" id="panel-stockalerts">
+      <div class="content-header"><div><h2>تنبيهات التوفر</h2><p>عملاء طلبوا يتبلّغوا لما منتج يرجع متوفر</p></div></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>المنتج</th><th>رقم الهاتف</th><th>التاريخ</th><th></th></tr></thead>
+        <tbody id="stockalerts-tbody"></tbody></table>
+      </div>
+    </section>
+
     <!-- Reviews -->
     <section class="section-panel" id="panel-reviews">
       <div class="content-header"><div><h2>التقييمات والمراجعات</h2><p>تقييمات العملاء على المنتجات</p></div></div>
@@ -223,6 +236,7 @@
           </select>
         </div>
         <div class="form-group full"><label>رابط الزر (اختياري)</label><input id="banner-buttonLink" placeholder="https://..."></div>
+        <div class="form-group full"><label>ينتهي العرض في (اختياري — لعرض عداد تنازلي)</label><input type="datetime-local" id="banner-expiresAt"></div>
         <div class="form-group"><label>ترتيب الظهور</label><input type="number" id="banner-order" value="0"></div>
         <div class="form-group">
           <label>الحالة</label>
