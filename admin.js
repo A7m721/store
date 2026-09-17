@@ -297,6 +297,7 @@ async function loadAllData() {
   listenReviews();
   listenProducts();
   listenOrders();
+  listenStockAlerts();
 }
 
 /* ========================================================
@@ -375,6 +376,9 @@ async function loadSettings() {
     $("#s-notifyPhone").value = s.notifyPhone || "";
     $("#s-privacyPolicy").value = s.privacyPolicy || "";
     $("#s-termsAndConditions").value = s.termsAndConditions || "";
+    $("#s-aboutText").value = s.aboutText || "";
+    $("#s-faqText").value = s.faqText || "";
+    $("#s-gaId").value = s.gaId || "";
     renderWorkingHoursGrid(s.workingHours);
     renderStoreQr();
   } catch (e) {
@@ -403,6 +407,9 @@ $("#settings-form").addEventListener("submit", async (e) => {
       vipThreshold: Number($("#s-vipThreshold").value) || 5000,
       privacyPolicy: $("#s-privacyPolicy").value.trim(),
       termsAndConditions: $("#s-termsAndConditions").value.trim(),
+      aboutText: $("#s-aboutText").value.trim(),
+      faqText: $("#s-faqText").value.trim(),
+      gaId: $("#s-gaId").value.trim(),
       workingHours: collectWorkingHours(),
       updatedAt: serverTimestamp()
     }, { merge: true });
@@ -467,6 +474,7 @@ function editBanner(id, banners) {
   $("#banner-description").value = b.description || "";
   $("#banner-style").value = b.style || "classic";
   $("#banner-buttonLink").value = b.buttonLink || "";
+  $("#banner-expiresAt").value = b.expiresAt || "";
   $("#banner-order").value = b.order ?? 0;
   $("#banner-active").value = String(b.active !== false);
   $("#banner-modal-title").textContent = "تعديل البانر";
@@ -482,6 +490,7 @@ $("#banner-form").addEventListener("submit", async (e) => {
     description: $("#banner-description").value.trim(),
     style: $("#banner-style").value,
     buttonLink: $("#banner-buttonLink").value.trim(),
+    expiresAt: $("#banner-expiresAt").value || null,
     order: Number($("#banner-order").value) || 0,
     active: $("#banner-active").value === "true"
   };
@@ -1242,6 +1251,43 @@ function renderReviewsTable(reviews) {
   }).join("");
 
   tbody.querySelectorAll("[data-del]").forEach(btn => btn.onclick = () => deleteItem("reviews", btn.dataset.del));
+}
+
+/* ========================================================
+   STOCK ALERTS (تنبيهات التوفر)
+   ======================================================== */
+function listenStockAlerts() {
+  const q = query(collection(db, "stockAlerts"), orderBy("createdAt", "desc"));
+  const unsub = onSnapshot(q, (snap) => {
+    const alerts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderStockAlertsTable(alerts);
+  }, (e) => {
+    console.error("خطأ في متابعة تنبيهات التوفر:", e);
+    renderStockAlertsTable([]);
+  });
+  unsubscribers.push(unsub);
+}
+
+function renderStockAlertsTable(alerts) {
+  const tbody = $("#stockalerts-tbody");
+  if (!alerts.length) { tbody.innerHTML = `<tr class="empty-row"><td colspan="4">لا توجد طلبات تنبيه حاليًا</td></tr>`; return; }
+  tbody.innerHTML = alerts.map(a => {
+    const date = a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString("ar-EG") : "-";
+    const text = `مرحبًا 👋 من ${STORE_NAME}\nحابب نبلغك إن "${a.productName || "المنتج"}" بقى متوفر تاني! تقدر تطلبه دلوقتي.`;
+    const waLink = `https://wa.me/${toWhatsAppNumber(a.phone)}?text=${encodeURIComponent(text)}`;
+    return `
+    <tr>
+      <td>${escapeHtml(a.productName || "-")}</td>
+      <td>${escapeHtml(a.phone || "")}</td>
+      <td>${date}</td>
+      <td class="row-actions">
+        <a class="btn btn-sm btn-whatsapp" href="${waLink}" target="_blank">💬 بلّغه</a>
+        <button class="btn btn-sm btn-danger" data-del="${a.id}">حذف</button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  tbody.querySelectorAll("[data-del]").forEach(btn => btn.onclick = () => deleteItem("stockAlerts", btn.dataset.del));
 }
 
 /* ========================================================
