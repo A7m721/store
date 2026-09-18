@@ -954,14 +954,10 @@ async function adjustVariantQuantity(productId, variantId, delta) {
 
 async function adjustStockForOrder(order, sign) {
   for (const item of (order.items || [])) {
-    try {
-      if (item.variantId) {
-        await adjustVariantQuantity(item.productId, item.variantId, sign * item.qty);
-      } else {
-        await updateDoc(doc(db, "products", item.productId), { quantity: increment(sign * item.qty) });
-      }
-    } catch (e) {
-      console.error("خطأ في تعديل المخزون:", e);
+    if (item.variantId) {
+      await adjustVariantQuantity(item.productId, item.variantId, sign * item.qty);
+    } else {
+      await updateDoc(doc(db, "products", item.productId), { quantity: increment(sign * item.qty) });
     }
   }
 }
@@ -1122,7 +1118,10 @@ function renderOrdersTable(orders) {
         }
         await updateDoc(doc(db, "orders", sel.dataset.id), updates);
         if (order) sendWhatsAppUpdate(order, newStatus);
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+        showAdminToast("⚠️ خطأ في تحديث المخزون: " + (e.code || e.message || "غير معروف"));
+      }
     });
   });
 
