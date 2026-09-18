@@ -940,7 +940,7 @@ function sendWhatsAppUpdate(order, status) {
   if (!order?.phone) return;
   const waNumber = toWhatsAppNumber(order.phone);
   const text = statusMessage(status, order.customerName, order.id);
-  window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, "_blank");
+  window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
 }
 
 function listenOrders() {
@@ -1281,7 +1281,7 @@ function renderStockAlertsTable(alerts) {
       <td>${escapeHtml(a.phone || "")}</td>
       <td>${date}</td>
       <td class="row-actions">
-        <a class="btn btn-sm btn-whatsapp" href="${waLink}" target="_blank">💬 بلّغه</a>
+        <a class="btn btn-sm btn-whatsapp" href="${waLink}" target="_blank" rel="noopener noreferrer">💬 بلّغه</a>
         <button class="btn btn-sm btn-danger" data-del="${a.id}">حذف</button>
       </td>
     </tr>`;
