@@ -15,7 +15,8 @@ import {
   where,
   onSnapshot,
   serverTimestamp,
-  increment
+  increment,
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 import {
   signInWithEmailAndPassword,
@@ -936,6 +937,35 @@ function statusMessage(status, customerName, orderId) {
   return templates[status] || `مرحبًا ${name}، تحديث بخصوص طلبك ${ref}: الحالة الآن "${status}".`;
 }
 
+/* ---------------- تعديل المخزون تلقائيًا عند اعتماد/إلغاء الطلب ----------------
+   sign = -1 لنقص الكمية (اعتماد الطلب)، sign = 1 لإرجاعها (لو الطلب اتلغى بعد الاعتماد) */
+async function adjustVariantQuantity(productId, variantId, delta) {
+  const ref = doc(db, "products", productId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return;
+    const data = snap.data();
+    const variants = (data.variants || []).map(v =>
+      v.id === variantId ? { ...v, quantity: Math.max(0, Number(v.quantity || 0) + delta) } : v
+    );
+    tx.update(ref, { variants });
+  });
+}
+
+async function adjustStockForOrder(order, sign) {
+  for (const item of (order.items || [])) {
+    try {
+      if (item.variantId) {
+        await adjustVariantQuantity(item.productId, item.variantId, sign * item.qty);
+      } else {
+        await updateDoc(doc(db, "products", item.productId), { quantity: increment(sign * item.qty) });
+      }
+    } catch (e) {
+      console.error("خطأ في تعديل المخزون:", e);
+    }
+  }
+}
+
 function sendWhatsAppUpdate(order, status) {
   if (!order?.phone) return;
   const waNumber = toWhatsAppNumber(order.phone);
@@ -1080,9 +1110,17 @@ function renderOrdersTable(orders) {
   tbody.querySelectorAll(".status-select").forEach(sel => {
     sel.addEventListener("change", async () => {
       const newStatus = sel.value;
+      const order = orders.find(x => x.id === sel.dataset.id);
       try {
-        await updateDoc(doc(db, "orders", sel.dataset.id), { status: newStatus });
-        const order = orders.find(x => x.id === sel.dataset.id);
+        const updates = { status: newStatus };
+        if (order && order.status === "جديد" && newStatus !== "جديد" && newStatus !== "ملغي" && !order.stockDeducted) {
+          await adjustStockForOrder(order, -1);
+          updates.stockDeducted = true;
+        } else if (order && newStatus === "ملغي" && order.stockDeducted) {
+          await adjustStockForOrder(order, 1);
+          updates.stockDeducted = false;
+        }
+        await updateDoc(doc(db, "orders", sel.dataset.id), updates);
         if (order) sendWhatsAppUpdate(order, newStatus);
       } catch (e) { console.error(e); }
     });
