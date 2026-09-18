@@ -594,21 +594,29 @@ function isProductOutOfStock(p) {
   return p.status === "unavailable" || Number(p.quantity) <= 0;
 }
 
+function goToProductEdit(id) {
+  $$("#sidebar-nav a").forEach(a => a.classList.toggle("active", a.dataset.section === "products"));
+  $$(".section-panel").forEach(p => p.classList.remove("active"));
+  $("#panel-products").classList.add("active");
+  $("#sidebar").classList.remove("mobile-open");
+  editProduct(id);
+}
+
 function renderLowStockWidget() {
   const widget = $("#low-stock-widget");
   const list = $("#low-stock-list");
   const outOfStock = PRODUCTS.filter(isProductOutOfStock);
   if (!outOfStock.length) { widget.style.display = "none"; return; }
   widget.style.display = "";
-  list.innerHTML = outOfStock.map(p => {
-    const text = `⚠️ تنبيه: نفدت الكمية من "${p.name}" في ${STORE_NAME}. حدّث الكمية من لوحة الإدارة.`;
-    const waLink = STOCK_ALERT_PHONE ? `https://wa.me/${toWhatsAppNumber(STOCK_ALERT_PHONE)}?text=${encodeURIComponent(text)}` : "#";
-    return `
+  list.innerHTML = outOfStock.map(p => `
       <div class="low-stock-row">
         <span>${escapeHtml(p.name || "")}</span>
-        ${STOCK_ALERT_PHONE ? `<a href="${waLink}" target="_blank">📩 تنبيه واتساب</a>` : ""}
-      </div>`;
-  }).join("");
+        <a href="#" data-goto-product="${p.id}">📦 اذهب للمنتج</a>
+      </div>`).join("");
+  list.querySelectorAll("[data-goto-product]").forEach(a => a.onclick = (e) => {
+    e.preventDefault();
+    goToProductEdit(a.dataset.gotoProduct);
+  });
 }
 
 function listenProducts() {
