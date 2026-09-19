@@ -298,7 +298,6 @@ async function loadAllData() {
   listenReviews();
   listenProducts();
   listenOrders();
-  listenStockAlerts();
 }
 
 /* ========================================================
@@ -1296,43 +1295,6 @@ function renderReviewsTable(reviews) {
   }).join("");
 
   tbody.querySelectorAll("[data-del]").forEach(btn => btn.onclick = () => deleteItem("reviews", btn.dataset.del));
-}
-
-/* ========================================================
-   STOCK ALERTS (تنبيهات التوفر)
-   ======================================================== */
-function listenStockAlerts() {
-  const q = query(collection(db, "stockAlerts"), orderBy("createdAt", "desc"));
-  const unsub = onSnapshot(q, (snap) => {
-    const alerts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderStockAlertsTable(alerts);
-  }, (e) => {
-    console.error("خطأ في متابعة تنبيهات التوفر:", e);
-    renderStockAlertsTable([]);
-  });
-  unsubscribers.push(unsub);
-}
-
-function renderStockAlertsTable(alerts) {
-  const tbody = $("#stockalerts-tbody");
-  if (!alerts.length) { tbody.innerHTML = `<tr class="empty-row"><td colspan="4">لا توجد طلبات تنبيه حاليًا</td></tr>`; return; }
-  tbody.innerHTML = alerts.map(a => {
-    const date = a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString("ar-EG") : "-";
-    const text = `مرحبًا 👋 من ${STORE_NAME}\nحابب نبلغك إن "${a.productName || "المنتج"}" بقى متوفر تاني! تقدر تطلبه دلوقتي.`;
-    const waLink = `https://wa.me/${toWhatsAppNumber(a.phone)}?text=${encodeURIComponent(text)}`;
-    return `
-    <tr>
-      <td>${escapeHtml(a.productName || "-")}</td>
-      <td>${escapeHtml(a.phone || "")}</td>
-      <td>${date}</td>
-      <td class="row-actions">
-        <a class="btn btn-sm btn-whatsapp" href="${waLink}" target="_blank" rel="noopener noreferrer">💬 بلّغه</a>
-        <button class="btn btn-sm btn-danger" data-del="${a.id}">حذف</button>
-      </td>
-    </tr>`;
-  }).join("");
-
-  tbody.querySelectorAll("[data-del]").forEach(btn => btn.onclick = () => deleteItem("stockAlerts", btn.dataset.del));
 }
 
 /* ========================================================
