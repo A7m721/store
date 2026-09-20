@@ -298,6 +298,7 @@ async function loadAllData() {
   listenReviews();
   listenProducts();
   listenOrders();
+  listenReturnRequests();
 }
 
 /* ========================================================
@@ -769,6 +770,9 @@ function editProduct(id) {
   $("#product-status").value = p.status || "available";
   $("#product-price").value = p.price ?? "";
   $("#product-oldPrice").value = p.oldPrice ?? "";
+  $("#product-flashPrice").value = p.flashPrice ?? "";
+  $("#product-flashStartsAt").value = p.flashStartsAt || "";
+  $("#product-flashEndsAt").value = p.flashEndsAt || "";
   $("#product-quantity").value = p.quantity ?? 0;
   $("#product-featured").value = String(!!p.featured);
   $("#product-label").value = p.label || "";
@@ -792,6 +796,9 @@ $("#product-form").addEventListener("submit", async (e) => {
     status: $("#product-status").value,
     price: Number($("#product-price").value) || 0,
     oldPrice: $("#product-oldPrice").value ? Number($("#product-oldPrice").value) : null,
+    flashPrice: $("#product-flashPrice").value ? Number($("#product-flashPrice").value) : null,
+    flashStartsAt: $("#product-flashStartsAt").value || null,
+    flashEndsAt: $("#product-flashEndsAt").value || null,
     quantity: Number($("#product-quantity").value) || 0,
     featured: $("#product-featured").value === "true",
     label: $("#product-label").value,
@@ -801,6 +808,12 @@ $("#product-form").addEventListener("submit", async (e) => {
   };
   try {
     if (id) {
+      const prevProduct = PRODUCTS.find(x => x.id === id);
+      const wasOut = prevProduct ? isProductOutOfStock(prevProduct) : false;
+      const nowOut = (data.variants && data.variants.length)
+        ? data.variants.every(v => Number(v.quantity) <= 0)
+        : (data.status === "unavailable" || Number(data.quantity) <= 0);
+      if (wasOut && !nowOut) data.restockedAt = serverTimestamp();
       await updateDoc(doc(db, "products", id), data);
     } else {
       data.createdAt = serverTimestamp();
@@ -1295,6 +1308,44 @@ function renderReviewsTable(reviews) {
   }).join("");
 
   tbody.querySelectorAll("[data-del]").forEach(btn => btn.onclick = () => deleteItem("reviews", btn.dataset.del));
+}
+
+/* ========================================================
+   RETURN REQUESTS (طلبات الاستبدال والاسترجاع)
+   ======================================================== */
+function listenReturnRequests() {
+  const q = query(collection(db, "returnRequests"), orderBy("createdAt", "desc"));
+  const unsub = onSnapshot(q, (snap) => {
+    const requests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderReturnsTable(requests);
+  }, (e) => {
+    console.error("خطأ في متابعة طلبات الاستبدال:", e);
+    renderReturnsTable([]);
+  });
+  unsubscribers.push(unsub);
+}
+
+function renderReturnsTable(requests) {
+  const tbody = $("#returns-tbody");
+  if (!requests.length) { tbody.innerHTML = `<tr class="empty-row"><td colspan="7">لا توجد طلبات استبدال حاليًا</td></tr>`; return; }
+  tbody.innerHTML = requests.map(r => {
+    const date = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString("ar-EG") : "-";
+    return `
+    <tr>
+      <td>#${(r.orderId || "").slice(0, 6)}</td>
+      <td>${escapeHtml(r.customerName || "")}</td>
+      <td>${escapeHtml(r.phone || "")}</td>
+      <td>${escapeHtml(r.reason || "")}</td>
+      <td style="max-width:220px;">${escapeHtml(r.note || "-")}</td>
+      <td>${date}</td>
+      <td class="row-actions">
+        ${r.phone ? `<a class="btn btn-sm btn-whatsapp" href="https://wa.me/${toWhatsAppNumber(r.phone)}" target="_blank" rel="noopener noreferrer">💬 تواصل</a>` : ""}
+        <button class="btn btn-sm btn-danger" data-del="${r.id}">حذف</button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  tbody.querySelectorAll("[data-del]").forEach(btn => btn.onclick = () => deleteItem("returnRequests", btn.dataset.del));
 }
 
 /* ========================================================
